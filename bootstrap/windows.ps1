@@ -82,11 +82,28 @@ foreach ($mod in @('PSReadLine','Terminal-Icons')) {
 }
 
 # 5. Wire $PROFILE
+# Resolve the user's real Documents folder (honors OneDrive / Known Folder
+# redirection to non-default drives, e.g. D:\documents) instead of assuming
+# it lives under $HOME.
 Log "Wiring `$PROFILE → dotfiles profile.ps1…"
+$documents = [Environment]::GetFolderPath('MyDocuments')
+if ([string]::IsNullOrWhiteSpace($documents)) {
+    $documents = Join-Path $HOME 'Documents'
+    Warn "  Could not resolve MyDocuments via shell; falling back to $documents"
+}
+Log "  Documents folder: $documents"
+
 $profilePaths = @(
-    $PROFILE.CurrentUserAllHosts,
-    (Join-Path $HOME 'Documents\PowerShell\Microsoft.PowerShell_profile.ps1')
-)
+    # PowerShell 7+ (pwsh) — both AllHosts and the host-specific profile
+    (Join-Path $documents 'PowerShell\profile.ps1'),
+    (Join-Path $documents 'PowerShell\Microsoft.PowerShell_profile.ps1'),
+    # Windows PowerShell 5.1
+    (Join-Path $documents 'WindowsPowerShell\profile.ps1'),
+    (Join-Path $documents 'WindowsPowerShell\Microsoft.PowerShell_profile.ps1'),
+    # Whatever the currently running host reports (covers ISE, VSCode host, etc.)
+    $PROFILE.CurrentUserAllHosts
+) | Where-Object { $_ } | Select-Object -Unique
+
 $dotProfile = Join-Path $env:DOTFILES 'powershell\profile.ps1'
 $sourceLine = ". `"$dotProfile`""
 
