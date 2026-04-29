@@ -1,0 +1,145 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# =============================================================================
+# Starship prompt — One Dark Pro palette (matches VS Code OneDarkPro)
+# =============================================================================
+
+format = """
+[](onedark_bg)\
+$os\
+$username\
+[](bg:onedark_purple fg:onedark_bg)\
+$directory\
+[](fg:onedark_purple bg:onedark_blue)\
+$git_branch\
+$git_status\
+[](fg:onedark_blue bg:onedark_cyan)\
+$nodejs\
+$python\
+$rust\
+$golang\
+$dotnet\
+$java\
+$docker_context\
+[](fg:onedark_cyan bg:onedark_grey)\
+$cmd_duration\
+[ ](fg:onedark_grey)\
+$line_break\
+$character"""
+
+palette = 'one_dark_pro'
+add_newline = true
+command_timeout = 1000
+
+[os]
+disabled = false
+style    = "bg:onedark_bg fg:onedark_cyan"
+format   = "[ $symbol ]($style)"
+
+[os.symbols]
+Windows = ""
+Ubuntu  = ""
+Debian  = ""
+Arch    = ""
+Alpine  = ""
+Fedora  = ""
+Linux   = ""
+Macos   = ""
+
+[username]
+show_always = true
+style_user  = "bg:onedark_bg fg:onedark_yellow"
+style_root  = "bg:onedark_bg fg:onedark_red bold"
+format      = '[ $user ]($style)'
+
+[directory]
+style              = "bg:onedark_purple fg:onedark_bg bold"
+format             = "[ $path ]($style)"
+truncation_length  = 3
+truncation_symbol  = "…/"
+truncate_to_repo   = false
+
+[directory.substitutions]
+"Documents"  = "󰈙 "
+"Downloads"  = " "
+"Music"      = " "
+"Pictures"   = " "
+"Developer"  = "󰲋 "
+"Projects"   = " "
+
+[git_branch]
+symbol = ""
+style  = "bg:onedark_blue fg:onedark_bg"
+format = '[ $symbol $branch ]($style)'
+
+[git_status]
+style    = "bg:onedark_blue fg:onedark_bg"
+format   = '[$all_status$ahead_behind ]($style)'
+ahead    = "⇡${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+behind   = "⇣${count}"
+modified = "!${count}"
+staged   = "+${count}"
+untracked = "?${count}"
+stashed  = "*${count}"
+
+[nodejs]
+symbol = ""
+style  = "bg:onedark_cyan fg:onedark_bg"
+format = '[ $symbol $version ]($style)'
+
+[python]
+symbol = ""
+style  = "bg:onedark_cyan fg:onedark_bg"
+format = '[ $symbol $version ]($style)'
+
+[rust]
+symbol = ""
+style  = "bg:onedark_cyan fg:onedark_bg"
+format = '[ $symbol $version ]($style)'
+
+[golang]
+symbol = ""
+style  = "bg:onedark_cyan fg:onedark_bg"
+format = '[ $symbol $version ]($style)'
+
+[dotnet]
+symbol = "󰪮"
+style  = "bg:onedark_cyan fg:onedark_bg"
+format = '[ $symbol $version ]($style)'
+
+[java]
+symbol = ""
+style  = "bg:onedark_cyan fg:onedark_bg"
+format = '[ $symbol $version ]($style)'
+
+[docker_context]
+symbol = ""
+style  = "bg:onedark_cyan fg:onedark_bg"
+format = '[ $symbol $context ]($style)'
+
+[cmd_duration]
+min_time = 500
+style    = "bg:onedark_grey fg:onedark_yellow"
+format   = '[ ⏱ $duration ]($style)'
+
+[line_break]
+disabled = false
+
+[character]
+success_symbol = '[❯](bold fg:onedark_cyan)'
+error_symbol   = '[❯](bold fg:onedark_red)'
+vimcmd_symbol  = '[❮](bold fg:onedark_purple)'
+
+[palettes.one_dark_pro]
+onedark_bg     = "#282c34"
+onedark_fg     = "#abb2bf"
+onedark_grey   = "#5c6370"
+onedark_select = "#3e4451"
+onedark_red    = "#e06c75"
+onedark_orange = "#d19a66"
+onedark_yellow = "#e5c07b"
+onedark_green  = "#98c379"
+onedark_cyan   = "#56b6c2"
+onedark_blue   = "#61afef"
+onedark_purple = "#c678dd"

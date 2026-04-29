@@ -1,0 +1,21 @@
+# Local machine overrides — never tracked
+*.local
+.zshrc.local
+profile.local.ps1
+
+# Dev container config — not part of dotfiles
+.devcontainer/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backups left by bootstrap
+.zshrc.backup.*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
