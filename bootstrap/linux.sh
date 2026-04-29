@@ -133,10 +133,14 @@ elif [ "$HAVE_ADMIN" -eq 1 ]; then
         if ! grep -qx "$ZSH_BIN" /etc/shells 2>/dev/null; then
             echo "$ZSH_BIN" | $SUDO tee -a /etc/shells >/dev/null
         fi
-        if chsh -s "$ZSH_BIN" "$USER" 2>/dev/null; then
+        # Run chsh via sudo so PAM doesn't prompt for the user's password
+        # (root doesn't need to authenticate to chsh). Falls back to usermod
+        # if chsh is unavailable.
+        if $SUDO chsh -s "$ZSH_BIN" "$USER" 2>/dev/null \
+            || $SUDO usermod -s "$ZSH_BIN" "$USER" 2>/dev/null; then
             ok "Default shell changed (effective on next login)."
         else
-            warn "chsh failed — falling back to ~/.bashrc shim."
+            warn "Could not change default shell — falling back to ~/.bashrc shim."
             HAVE_ADMIN=0   # trigger shim block below
         fi
     else
@@ -162,8 +166,13 @@ fi
 # Zinit + plugins (cloned to ~/.local/share/zinit, no admin needed)
 # -----------------------------------------------------------------------------
 log "Bootstrapping Zinit + plugins…"
-zsh -ic 'zinit self-update >/dev/null 2>&1; echo "  zinit ready."' || \
-    warn "Zinit bootstrap returned non-zero — will retry on first interactive launch."
+# Make git/ssh strictly non-interactive so a transient clone failure or an
+# insteadOf-redirected SSH URL can't hang waiting for credentials / host keys.
+export GIT_TERMINAL_PROMPT=0
+export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new}"
+if ! timeout 180 zsh -ic 'zinit self-update >/dev/null 2>&1; echo "  zinit ready."'; then
+    warn "Zinit bootstrap timed out or failed — plugins will retry on first interactive launch."
+fi
 
 ok "Bootstrap complete."
 echo
