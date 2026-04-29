@@ -172,18 +172,28 @@ fi
 # -----------------------------------------------------------------------------
 log "Bootstrapping Zinit…"
 ZINIT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
+TIMEOUT_BIN=""
+have timeout && TIMEOUT_BIN="timeout 60"
+
 if [ ! -d "$ZINIT_HOME" ]; then
     mkdir -p "$(dirname "$ZINIT_HOME")"
-    git clone --depth=1 https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME" \
-        >/dev/null 2>&1 \
-        && ok "Zinit cloned." \
-        || warn "Zinit clone failed — will retry on first interactive launch."
+    for attempt in 1 2 3; do
+        if $TIMEOUT_BIN git clone --depth=1 \
+                https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME" \
+                </dev/null >/dev/null 2>&1; then
+            ok "Zinit cloned."
+            break
+        fi
+        rm -rf "$ZINIT_HOME"
+        warn "Zinit clone failed (attempt ${attempt}/3) — retrying…"
+        sleep 2
+    done
+    [ -d "$ZINIT_HOME/.git" ] \
+        || warn "Zinit clone did not succeed — first interactive launch will retry."
 fi
 
 if [ -r "$ZINIT_HOME/zinit.zsh" ]; then
     # `timeout` is a belt-and-braces guard in case git ever prompts.
-    TIMEOUT_BIN=""
-    have timeout && TIMEOUT_BIN="timeout 60"
     if $TIMEOUT_BIN zsh -df -c \
         'source "'"$ZINIT_HOME"'/zinit.zsh"; zinit self-update' \
         </dev/null >/dev/null 2>&1; then
@@ -193,6 +203,74 @@ if [ -r "$ZINIT_HOME/zinit.zsh" ]; then
     fi
 else
     warn "Zinit not found at $ZINIT_HOME — will install on first interactive launch."
+fi
+
+# -----------------------------------------------------------------------------
+# Pre-load plugins + snippets via zinit itself, so the plugin list stays in
+# one place (zsh/zinit.zsh). We source the dotfiles' zinit config in a
+# non-interactive zsh and force zinit to flush its turbo queue with
+# `@zinit-scheduler burst` — that performs the same clones + snippet
+# downloads the first interactive shell would, but at bootstrap time.
+#
+# Retried up to 3 times to tolerate transient GitHub clone failures.
+# -----------------------------------------------------------------------------
+if [ -r "$ZINIT_HOME/zinit.zsh" ] && [ -r "$DOTFILES/zsh/zinit.zsh" ]; then
+    log "Pre-loading Zinit plugins + snippets…"
+    PRELOAD_OK=0
+    for attempt in 1 2 3 4 5; do
+        # `zsh -df` skips user rc files; we explicitly source zinit + the
+        # dotfiles' zinit config, then burst the scheduler. Errors from
+        # missing widgets / interactive-only features are expected and
+        # silenced — we only care that the network installs succeed.
+        if $TIMEOUT_BIN zsh -df +o promptsubst -c '
+            export DOTFILES="'"$DOTFILES"'"
+            source "'"$ZINIT_HOME"'/zinit.zsh" 2>/dev/null
+            source "$DOTFILES/zsh/zinit.zsh" 2>/dev/null
+
+            # Snapshot the pending turbo queue BEFORE bursting it. Each task
+            # row looks like: "<ts>+<delay>+<run> <p|s> <id> <a> <name>".
+            # type=p → plugin (user/repo), type=s → snippet (e.g. OMZP::git).
+            local -a expected_plugins expected_snippets
+            local task type name
+            for task in "${ZINIT_TASKS[@]}"; do
+                [[ "$task" == "<no-data>" ]] && continue
+                # Fields: 1=ts+..., 2=type, 3=id, 4=a, 5=name
+                type="${${(z)task}[2]}"
+                name="${${(z)task}[5]}"
+                case "$type" in
+                    p) expected_plugins+=("$name") ;;
+                    s) expected_snippets+=("$name") ;;
+                esac
+            done
+
+            # Force all `zinit wait...` units to install/load now.
+            @zinit-scheduler burst 2>/dev/null
+
+            # Verify each expected plugin has a clone on disk.
+            local entry dir
+            for entry in "${expected_plugins[@]}"; do
+                dir="${ZINIT[PLUGINS_DIR]}/${entry//\//---}"
+                [[ -d "$dir/.git" ]] || exit 1
+            done
+            # Verify each expected snippet was downloaded. Zinit creates a
+            # dir under SNIPPETS_DIR named exactly after the identifier.
+            for entry in "${expected_snippets[@]}"; do
+                [[ -d "${ZINIT[SNIPPETS_DIR]}/$entry" ]] || exit 1
+            done
+        ' </dev/null >/dev/null 2>&1; then
+            PRELOAD_OK=1
+            break
+        fi
+        warn "Pre-load attempt ${attempt}/5 failed — retrying…"
+        sleep $(( attempt * 3 ))
+    done
+    if [ "$PRELOAD_OK" -eq 1 ]; then
+        ok "Plugins + snippets cached."
+    else
+        warn "Pre-load did not fully succeed — first interactive launch will retry."
+    fi
+else
+    warn "Skipping plugin pre-load (zinit or dotfiles config not readable)."
 fi
 
 ok "Bootstrap complete."
