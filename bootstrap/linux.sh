@@ -170,9 +170,30 @@ fi
 # -----------------------------------------------------------------------------
 # Zinit + plugins (cloned to ~/.local/share/zinit, no admin needed)
 # -----------------------------------------------------------------------------
-log "Bootstrapping Zinit + plugins…"
-zsh -ic 'zinit self-update >/dev/null 2>&1; echo "  zinit ready."' || \
-    warn "Zinit bootstrap returned non-zero — will retry on first interactive launch."
+log "Bootstrapping Zinit…"
+ZINIT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
+if [ ! -d "$ZINIT_HOME" ]; then
+    mkdir -p "$(dirname "$ZINIT_HOME")"
+    git clone --depth=1 https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME" \
+        >/dev/null 2>&1 \
+        && ok "Zinit cloned." \
+        || warn "Zinit clone failed — will retry on first interactive launch."
+fi
+
+if [ -r "$ZINIT_HOME/zinit.zsh" ]; then
+    # `timeout` is a belt-and-braces guard in case git ever prompts.
+    TIMEOUT_BIN=""
+    have timeout && TIMEOUT_BIN="timeout 60"
+    if $TIMEOUT_BIN zsh -df -c \
+        'source "'"$ZINIT_HOME"'/zinit.zsh"; zinit self-update' \
+        </dev/null >/dev/null 2>&1; then
+        ok "Zinit ready."
+    else
+        warn "Zinit self-update returned non-zero — will retry on first interactive launch."
+    fi
+else
+    warn "Zinit not found at $ZINIT_HOME — will install on first interactive launch."
+fi
 
 ok "Bootstrap complete."
 echo
