@@ -48,19 +48,19 @@ setopt INTERACTIVE_COMMENTS
 # shell launch. Cache invalidates when the starship binary or its config
 # changes (mtime check).
 # -----------------------------------------------------------------------------
-() {
-    emulate -L zsh
-    local bin
-    bin=$(command -v starship) || return
+_starship_bin=$(command -v starship)
+if [[ -n "$_starship_bin" ]]; then
     export STARSHIP_CONFIG="$DOTFILES/starship/starship.toml"
-
-    local cache="${XDG_CACHE_HOME:-$HOME/.cache}/starship/init.zsh"
-    if [[ ! -s "$cache" || "$bin" -nt "$cache" || "$STARSHIP_CONFIG" -nt "$cache" ]]; then
-        mkdir -p "${cache:h}"
-        "$bin" init zsh --print-full-init >| "$cache"
+    _starship_cache="${XDG_CACHE_HOME:-$HOME/.cache}/starship/init.zsh"
+    if [[ ! -s "$_starship_cache" \
+        || "$_starship_bin" -nt "$_starship_cache" \
+        || "$STARSHIP_CONFIG" -nt "$_starship_cache" ]]; then
+        mkdir -p "${_starship_cache:h}"
+        "$_starship_bin" init zsh --print-full-init >| "$_starship_cache"
     fi
-    source "$cache"
-}
+    source "$_starship_cache"
+fi
+unset _starship_bin _starship_cache
 
 # -----------------------------------------------------------------------------
 # Background maintenance — compile our zsh files when source is newer than

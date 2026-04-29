@@ -16,13 +16,31 @@ autoload -Uz _zinit
 (( ${+_comps} )) && _comps[zinit]=_zinit
 
 # -----------------------------------------------------------------------------
+# Plugin settings (must be set BEFORE the plugins load)
+# -----------------------------------------------------------------------------
+# One Dark Pro–compatible muted suggestion grey (matches the comment colour)
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#5c6370'
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+# Default emacs keymap — safe to set synchronously since bindkey -e doesn't
+# reference any plugin widgets.
+bindkey -e
+
+# -----------------------------------------------------------------------------
 # Plugins — turbo mode (deferred until after first prompt)
+#
+# Bindkeys that reference plugin-defined widgets (autosuggest-accept,
+# history-substring-search-*) MUST be set in `atload` hooks so they run only
+# after the widget is registered — otherwise fast-syntax-highlighting emits
+# "unhandled ZLE widget" warnings on each prompt.
 # -----------------------------------------------------------------------------
 zinit wait lucid for \
     atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
         zdharma-continuum/fast-syntax-highlighting \
-    atload"!_zsh_autosuggest_start" \
+    atload'!_zsh_autosuggest_start; bindkey "^ " autosuggest-accept' \
         zsh-users/zsh-autosuggestions \
+    atload'bindkey "^[[A" history-substring-search-up; bindkey "^[[B" history-substring-search-down' \
+        zsh-users/zsh-history-substring-search \
     blockf atpull'zinit creinstall -q .' \
         zsh-users/zsh-completions
 
@@ -32,13 +50,3 @@ zinit wait lucid for \
     OMZP::git \
     OMZP::sudo \
     OMZP::command-not-found
-
-# One Dark Pro–compatible muted suggestion grey (matches the comment colour)
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#5c6370'
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-
-# Keybindings
-bindkey -e
-bindkey '^[[A'   history-substring-search-up
-bindkey '^[[B'   history-substring-search-down
-bindkey '^ '     autosuggest-accept
