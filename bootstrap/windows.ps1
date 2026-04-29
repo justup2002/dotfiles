@@ -106,17 +106,45 @@ $profilePaths = @(
 
 $dotProfile = Join-Path $env:DOTFILES 'powershell\profile.ps1'
 $sourceLine = ". `"$dotProfile`""
+$block      = "# Loaded by dotfiles bootstrap`r`n$sourceLine`r`n"
 
 foreach ($p in $profilePaths) {
     $dir = Split-Path $p
-    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-    if (-not (Test-Path $p))   { New-Item -ItemType File -Force -Path $p | Out-Null }
-    $existing = Get-Content $p -Raw -ErrorAction SilentlyContinue
-    if ($existing -notmatch [regex]::Escape($dotProfile)) {
-        Add-Content -Path $p -Value "`n# Loaded by dotfiles bootstrap`n$sourceLine"
-        Ok "  wired $p"
-    } else {
+    if (-not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    }
+
+    # Read existing content (if any) without creating the file first.
+    $existing = ''
+    if (Test-Path $p) {
+        $existing = Get-Content -LiteralPath $p -Raw -ErrorAction SilentlyContinue
+        if ($null -eq $existing) { $existing = '' }
+    }
+
+    if ($existing -match [regex]::Escape($dotProfile)) {
         Ok "  already wired: $p"
+        continue
+    }
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($existing)) {
+            # Brand new (or empty) profile — write the block atomically as UTF-8.
+            Set-Content -LiteralPath $p -Value $block -Encoding UTF8 -Force
+        } else {
+            # Existing profile with unrelated content — append, preserving it.
+            $sep = if ($existing.EndsWith("`n")) { '' } else { "`r`n" }
+            Add-Content -LiteralPath $p -Value ($sep + $block) -Encoding UTF8
+        }
+
+        # Verify the write actually landed.
+        $verify = Get-Content -LiteralPath $p -Raw -ErrorAction SilentlyContinue
+        if ($verify -match [regex]::Escape($dotProfile)) {
+            Ok "  wired $p"
+        } else {
+            Warn "  wrote $p but source line not detected on re-read"
+        }
+    } catch {
+        Warn "  failed to wire $p — $($_.Exception.Message)"
     }
 }
 
