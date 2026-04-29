@@ -171,13 +171,8 @@ fi
 # Zinit + plugins (cloned to ~/.local/share/zinit, no admin needed)
 # -----------------------------------------------------------------------------
 log "Bootstrapping Zinit + plugins…"
-# Make git/ssh strictly non-interactive so a transient clone failure or an
-# insteadOf-redirected SSH URL can't hang waiting for credentials / host keys.
-export GIT_TERMINAL_PROMPT=0
-export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new}"
-if ! timeout 180 zsh -ic 'zinit self-update >/dev/null 2>&1; echo "  zinit ready."'; then
-    warn "Zinit bootstrap timed out or failed — plugins will retry on first interactive launch."
-fi
+zsh -ic 'zinit self-update >/dev/null 2>&1; echo "  zinit ready."' || \
+    warn "Zinit bootstrap returned non-zero — will retry on first interactive launch."
 
 ok "Bootstrap complete."
 echo
