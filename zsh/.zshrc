@@ -75,6 +75,3 @@ unset _starship_bin _starship_cache
 } &!
 
 [[ -n "${ZPROF:-}" ]] && zprof
-
-# 1Password SSH Agent
-export SSH_AUTH_SOCK="$HOME/.ssh/1password-agent.sock"

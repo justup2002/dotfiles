@@ -118,6 +118,11 @@ ln -sfn "$DOTFILES/zsh/.zshrc" "$HOME/.zshrc"
 if ! grep -q 'DOTFILES=' "$HOME/.zshenv" 2>/dev/null; then
     echo "export DOTFILES=\"$DOTFILES\"" >> "$HOME/.zshenv"
 fi
+# Source the dotfiles-managed zshenv so env vars (e.g. SSH_AUTH_SOCK) are
+# available in non-interactive zsh too — scripts, cron, `zsh -c …`.
+if ! grep -q 'zshenv.zsh' "$HOME/.zshenv" 2>/dev/null; then
+    echo '[ -r "$DOTFILES/zsh/zshenv.zsh" ] && source "$DOTFILES/zsh/zshenv.zsh"' >> "$HOME/.zshenv"
+fi
 ok "Zsh config linked."
 
 # -----------------------------------------------------------------------------
