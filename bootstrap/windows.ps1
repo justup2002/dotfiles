@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # bootstrap/windows.ps1
 # Idempotent installer for Windows: PS7 + Starship + MesloLGS NF +
 # PSReadLine + Terminal-Icons + Windows Terminal One Dark Pro fragment
