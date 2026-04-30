@@ -105,12 +105,12 @@ fi
 
 model_effort=$model
 if [ -n "$effort" ]; then
-    model_effort="$model $effort"
+    model_effort="$model ($effort)"
 fi
 
 export CLAUDE_CODE_MODEL_EFFORT="$model_effort"
 export CLAUDE_CODE_CONTEXT_USAGE="$(format_gauge "$used_percentage") $(format_tokens "$context_used")/$(format_tokens "$context_size") $(format_percentage "$used_percentage")"
-export CLAUDE_CODE_TOKEN_USAGE="in $(format_tokens "$total_input") out $(format_tokens "$total_output")"
+export CLAUDE_CODE_TOKEN_USAGE="$(format_tokens "$total_input") $(format_tokens "$total_output")"
 
 starship_json=$(
     printf '%s' "$json" |
