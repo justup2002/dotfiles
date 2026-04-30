@@ -58,6 +58,9 @@ Then merge `vscode/settings.json` into your User settings JSON.
 
 - Aliases / functions: edit `zsh/aliases.zsh` (committed) or `~/.zshrc.local` (local-only).
 - Prompt: edit `starship/starship.toml`. Both shells re-read it on launch.
+- Claude Code statusline: set `statusLine.command` in `~/.claude/settings.json`
+  to `$DOTFILES/starship/claude-code-statusline.sh`; the statusline profile
+  lives in `starship/starship.toml`.
 - PowerShell extras: drop machine-specific tweaks into
   `~/Documents/PowerShell/profile.local.ps1` — auto-sourced if present.
 - Add a plugin: in `zsh/zinit.zsh` add a line under the `zinit wait lucid for` block.

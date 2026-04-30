@@ -23,6 +23,13 @@ $character\
 palette = 'one_dark_pro'
 add_newline = true
 
+[profiles]
+claude-code = """
+${custom.claude_model_effort}\
+${custom.claude_context_usage}\
+${custom.claude_token_usage}\
+"""
+
 [palettes.one_dark_pro]
 foreground = '#abb2bf'
 background = '#282c34'
@@ -107,6 +114,21 @@ symbol = ' Java'
 [c]
 format = '[─](fg:current_line)[](fg:blue)[$symbol](fg:primary bg:blue)[](fg:blue bg:box)[ $version](fg:foreground bg:box)[](fg:box)'
 symbol = ' C'
+
+[custom.claude_model_effort]
+command = 'printf "%s" "$CLAUDE_CODE_MODEL_EFFORT"'
+when = 'test -n "$CLAUDE_CODE_MODEL_EFFORT"'
+format = '[](fg:purple)[󰚩 ](fg:primary bg:purple)[](fg:purple bg:box)[ $output](fg:foreground bg:box)[](fg:box) '
+
+[custom.claude_context_usage]
+command = 'printf "%s" "$CLAUDE_CODE_CONTEXT_USAGE"'
+when = 'test -n "$CLAUDE_CODE_CONTEXT_USAGE"'
+format = '[](fg:cyan)[󰍛 ](fg:primary bg:cyan)[](fg:cyan bg:box)[ $output](fg:foreground bg:box)[](fg:box) '
+
+[custom.claude_token_usage]
+command = 'printf "%s" "$CLAUDE_CODE_TOKEN_USAGE"'
+when = 'test -n "$CLAUDE_CODE_TOKEN_USAGE"'
+format = '[](fg:green)[󰓡 ](fg:primary bg:green)[](fg:green bg:box)[ $output](fg:foreground bg:box)[](fg:box)'
 
 [fill]
 symbol = '─'
