@@ -1,145 +1,139 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# =============================================================================
-# Starship prompt — One Dark Pro palette (matches VS Code OneDarkPro)
-# =============================================================================
 
 format = """
-[](onedark_bg)\
+[╭](fg:current_line)\
 $os\
-$username\
-[](bg:onedark_purple fg:onedark_bg)\
 $directory\
-[](fg:onedark_purple bg:onedark_blue)\
 $git_branch\
-$git_status\
-[](fg:onedark_blue bg:onedark_cyan)\
+$fill\
 $nodejs\
+$dotnet\ 
 $python\
-$rust\
-$golang\
-$dotnet\
 $java\
-$docker_context\
-[](fg:onedark_cyan bg:onedark_grey)\
+$c\
 $cmd_duration\
-[ ](fg:onedark_grey)\
+$shell\
+$time\
+$username\
 $line_break\
-$character"""
+$character\
+"""
 
 palette = 'one_dark_pro'
 add_newline = true
-command_timeout = 1000
+
+[palettes.one_dark_pro]
+foreground = '#abb2bf'
+background = '#282c34'
+current_line = '#5c6370'
+primary = '#3e4451'
+box = '#5c6370'
+blue	= '#61afef'
+cyan = '#56b6c2'
+green	= '#98c379'
+orange = '#d19a66'
+pink = '#c162de'
+purple = '#c678dd'
+red	= '#e06c75'
+yellow = '#e5c07b'
 
 [os]
+format = '(fg:current_line)[](fg:red)[$symbol ](fg:primary bg:red)[](fg:red)'
 disabled = false
-style    = "bg:onedark_bg fg:onedark_cyan"
-format   = "[ $symbol ]($style)"
 
 [os.symbols]
-Windows = ""
-Ubuntu  = ""
-Debian  = ""
-Arch    = ""
-Alpine  = ""
-Fedora  = ""
-Linux   = ""
-Macos   = ""
-
-[username]
-show_always = true
-style_user  = "bg:onedark_bg fg:onedark_yellow"
-style_root  = "bg:onedark_bg fg:onedark_red bold"
-format      = '[ $user ]($style)'
+Alpine = ''
+Amazon = ''
+Android = ''
+Arch = ''
+CentOS = ''
+Debian = ''
+EndeavourOS = ''
+Fedora = ''
+FreeBSD = ''
+Garuda = ''
+Gentoo = ''
+Linux = ''
+Macos = ''
+Manjaro = ''
+Mariner = ''
+Mint = ''
+NetBSD = ''
+NixOS = ''
+OpenBSD = ''
+OpenCloudOS = ''
+openEuler = ''
+openSUSE = ''
+OracleLinux = '⊂⊃'
+Pop = ''
+Raspbian = ''
+Redhat = ''
+RedHatEnterprise = ''
+Solus = ''
+SUSE = ''
+Ubuntu = ''
+Unknown = ''
+Windows = ''
 
 [directory]
-style              = "bg:onedark_purple fg:onedark_bg bold"
-format             = "[ $path ]($style)"
-truncation_length  = 3
-truncation_symbol  = "…/"
-truncate_to_repo   = false
-
-[directory.substitutions]
-"Documents"  = "󰈙 "
-"Downloads"  = " "
-"Music"      = " "
-"Pictures"   = " "
-"Developer"  = "󰲋 "
-"Projects"   = " "
+format = '[─](fg:current_line)[](fg:pink)[󰷏 ](fg:primary bg:pink)[](fg:pink bg:box)[ $read_only$truncation_symbol$path](fg:foreground bg:box)[](fg:box)'
+home_symbol = " ~/"
+truncation_symbol = ' '
+truncation_length = 2
+read_only = '󱧵 '
+read_only_style = ''
 
 [git_branch]
-symbol = ""
-style  = "bg:onedark_blue fg:onedark_bg"
-format = '[ $symbol $branch ]($style)'
-
-[git_status]
-style    = "bg:onedark_blue fg:onedark_bg"
-format   = '[$all_status$ahead_behind ]($style)'
-ahead    = "⇡${count}"
-diverged = "⇕⇡${ahead_count}⇣${behind_count}"
-behind   = "⇣${count}"
-modified = "!${count}"
-staged   = "+${count}"
-untracked = "?${count}"
-stashed  = "*${count}"
+format = '[─](fg:current_line)[](fg:green)[$symbol](fg:primary bg:green)[](fg:green bg:box)[ $branch](fg:foreground bg:box)[](fg:box)'
+symbol = ' '
 
 [nodejs]
-symbol = ""
-style  = "bg:onedark_cyan fg:onedark_bg"
-format = '[ $symbol $version ]($style)'
-
-[python]
-symbol = ""
-style  = "bg:onedark_cyan fg:onedark_bg"
-format = '[ $symbol $version ]($style)'
-
-[rust]
-symbol = ""
-style  = "bg:onedark_cyan fg:onedark_bg"
-format = '[ $symbol $version ]($style)'
-
-[golang]
-symbol = ""
-style  = "bg:onedark_cyan fg:onedark_bg"
-format = '[ $symbol $version ]($style)'
+format = '[─](fg:current_line)[](fg:green)[$symbol](fg:primary bg:green)[](fg:green bg:box)[ $version](fg:foreground bg:box)[](fg:box)'
+symbol = '󰎙 Node.js'
 
 [dotnet]
-symbol = "󰪮"
-style  = "bg:onedark_cyan fg:onedark_bg"
-format = '[ $symbol $version ]($style)'
+format = '[─](fg:current_line)[](fg:purple)[$symbol](fg:primary bg:purple)[](fg:purple bg:box)[ $tfm](fg:foreground bg:box)[](fg:box)'
+symbol = ' .NET'
+
+[python]
+format = '[─](fg:current_line)[](fg:green)[$symbol](fg:primary bg:green)[](fg:green bg:box)[ $version](fg:foreground bg:box)[](fg:box)'
+symbol = ' python'
 
 [java]
-symbol = ""
-style  = "bg:onedark_cyan fg:onedark_bg"
-format = '[ $symbol $version ]($style)'
+format = '[─](fg:current_line)[](fg:red)[$symbol](fg:primary bg:red)[](fg:red bg:box)[ $version](fg:foreground bg:box)[](fg:box)'
+symbol = ' Java'
 
-[docker_context]
-symbol = ""
-style  = "bg:onedark_cyan fg:onedark_bg"
-format = '[ $symbol $context ]($style)'
+[c]
+format = '[─](fg:current_line)[](fg:blue)[$symbol](fg:primary bg:blue)[](fg:blue bg:box)[ $version](fg:foreground bg:box)[](fg:box)'
+symbol = ' C'
+
+[fill]
+symbol = '─'
+style = 'fg:current_line'
 
 [cmd_duration]
 min_time = 500
-style    = "bg:onedark_grey fg:onedark_yellow"
-format   = '[ ⏱ $duration ]($style)'
+format = '[─](fg:current_line)[](fg:orange)[ ](fg:primary bg:orange)[](fg:orange bg:box)[ $duration ](fg:foreground bg:box)[](fg:box)'
 
-[line_break]
+[shell]
+format = '[─](fg:current_line)[](fg:blue)[ ](fg:primary bg:blue)[](fg:blue bg:box)[ $indicator](fg:foreground bg:box)[](fg:box)'
+unknown_indicator = 'shell'
+powershell_indicator = 'powershell'
+fish_indicator = 'fish'
 disabled = false
 
-[character]
-success_symbol = '[❯](bold fg:onedark_cyan)'
-error_symbol   = '[❯](bold fg:onedark_red)'
-vimcmd_symbol  = '[❮](bold fg:onedark_purple)'
+[time]
+format = '[─](fg:current_line)[](fg:purple)[󰦖 ](fg:primary bg:purple)[](fg:purple bg:box)[ $time](fg:foreground bg:box)[](fg:box)'
+time_format = '%H:%M'
+disabled = false
 
-[palettes.one_dark_pro]
-onedark_bg     = "#282c34"
-onedark_fg     = "#abb2bf"
-onedark_grey   = "#5c6370"
-onedark_select = "#3e4451"
-onedark_red    = "#e06c75"
-onedark_orange = "#d19a66"
-onedark_yellow = "#e5c07b"
-onedark_green  = "#98c379"
-onedark_cyan   = "#56b6c2"
-onedark_blue   = "#61afef"
-onedark_purple = "#c678dd"
+[username]
+format = '[─](fg:current_line)[](fg:yellow)[ ](fg:primary bg:yellow)[](fg:yellow bg:box)[ $user](fg:foreground bg:box)[](fg:box) '
+show_always = true
+
+[character]
+format = """
+[╰─$symbol](fg:current_line) """
+success_symbol = '[λ](fg:bold white)'
+error_symbol = '[×](fg:bold red)'
