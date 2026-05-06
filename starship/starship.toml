@@ -28,6 +28,8 @@ claude-code = """
 ${custom.claude_model_effort}\
 ${custom.claude_context_usage}\
 ${custom.claude_token_usage}\
+${custom.claude_five_hour_limit}\
+${custom.claude_seven_day_limit}\
 """
 
 [palettes.one_dark_pro]
@@ -128,7 +130,17 @@ format = '[](fg:cyan)[󰍛 ](fg:primary bg:cyan)[](fg:cyan bg:box)[ $outpu
 [custom.claude_token_usage]
 command = 'printf "%s" "$CLAUDE_CODE_TOKEN_USAGE"'
 when = 'test -n "$CLAUDE_CODE_TOKEN_USAGE"'
-format = '[](fg:green)[󰓡 ](fg:primary bg:green)[](fg:green bg:box)[ $output](fg:foreground bg:box)[](fg:box)'
+format = '[](fg:green)[󰓡 ](fg:primary bg:green)[](fg:green bg:box)[ $output](fg:foreground bg:box)[](fg:box) '
+
+[custom.claude_five_hour_limit]
+command = 'printf "%s" "$CLAUDE_CODE_FIVE_HOUR_LIMIT"'
+when = 'test -n "$CLAUDE_CODE_FIVE_HOUR_LIMIT"'
+format = '[](fg:yellow)[󱎫 ](fg:primary bg:yellow)[](fg:yellow bg:box)[ $output](fg:foreground bg:box)[](fg:box) '
+
+[custom.claude_seven_day_limit]
+command = 'printf "%s" "$CLAUDE_CODE_SEVEN_DAY_LIMIT"'
+when = 'test -n "$CLAUDE_CODE_SEVEN_DAY_LIMIT"'
+format = '[](fg:orange)[󰸘 ](fg:primary bg:orange)[](fg:orange bg:box)[ $output](fg:foreground bg:box)[](fg:box)'
 
 [fill]
 symbol = '─'

@@ -63,6 +63,19 @@ format_gauge() {
     }'
 }
 
+format_remaining() {
+    awk -v resets="${1:-0}" -v now="$(date +%s)" 'BEGIN {
+        secs = resets - now
+        if (secs <= 0) { printf "now"; exit }
+        days = int(secs / 86400)
+        hours = int((secs % 86400) / 3600)
+        mins = int((secs % 3600) / 60)
+        if (days > 0)        printf "%dd %dh", days, hours
+        else if (hours > 0)  printf "%dh %dm", hours, mins
+        else                 printf "%dm", mins
+    }'
+}
+
 model=$(json_string display_name)
 effort=$(
     printf '%s\n' "$json" |
@@ -108,9 +121,33 @@ if [ -n "$effort" ]; then
     model_effort="$model ($effort)"
 fi
 
+extract_number() {
+    obj=$1
+    key=$2
+    printf '%s\n' "$obj" |
+        sed -nE 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*([0-9]+([.][0-9]+)?).*/\1/p' |
+        head -n 1
+}
+
+five_hour_obj=$(printf '%s\n' "$json" | sed -nE 's/.*"five_hour"[[:space:]]*:[[:space:]]*\{([^}]*)\}.*/\1/p' | head -n 1)
+seven_day_obj=$(printf '%s\n' "$json" | sed -nE 's/.*"seven_day"[[:space:]]*:[[:space:]]*\{([^}]*)\}.*/\1/p' | head -n 1)
+
+five_hour_pct=$(extract_number "$five_hour_obj" used_percentage)
+five_hour_reset=$(extract_number "$five_hour_obj" resets_at)
+seven_day_pct=$(extract_number "$seven_day_obj" used_percentage)
+seven_day_reset=$(extract_number "$seven_day_obj" resets_at)
+
 export CLAUDE_CODE_MODEL_EFFORT="$model_effort"
 export CLAUDE_CODE_CONTEXT_USAGE="$(format_gauge "$used_percentage") $(format_tokens "$context_used")/$(format_tokens "$context_size") $(format_percentage "$used_percentage")"
 export CLAUDE_CODE_TOKEN_USAGE="$(format_tokens "$total_input") $(format_tokens "$total_output")"
+
+if [ -n "$five_hour_pct" ] && [ -n "$five_hour_reset" ]; then
+    export CLAUDE_CODE_FIVE_HOUR_LIMIT="$(format_gauge "$five_hour_pct") $(format_percentage "$five_hour_pct") · $(format_remaining "$five_hour_reset")"
+fi
+
+if [ -n "$seven_day_pct" ] && [ -n "$seven_day_reset" ]; then
+    export CLAUDE_CODE_SEVEN_DAY_LIMIT="$(format_gauge "$seven_day_pct") $(format_percentage "$seven_day_pct") · $(format_remaining "$seven_day_reset")"
+fi
 
 starship_json=$(
     printf '%s' "$json" |
