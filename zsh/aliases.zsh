@@ -16,3 +16,6 @@ alias g='git'
 alias gs='git status'
 alias gd='git diff'
 alias gl='git log --oneline --graph --decorate'
+if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
+  alias op='op.exe'
+fi
