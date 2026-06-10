@@ -1,6 +1,15 @@
 #!/usr/bin/env sh
 set -eu
 
+# Use the starship.toml next to this script (it defines the claude-code
+# profile) unless the caller already set one. Without this, starship would
+# silently fall back to its built-in claude-code statusline whenever Claude
+# Code is launched from a context that didn't export STARSHIP_CONFIG.
+if [ -z "${STARSHIP_CONFIG:-}" ]; then
+    STARSHIP_CONFIG="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)/starship.toml"
+    export STARSHIP_CONFIG
+fi
+
 input=$(cat)
 json=$(printf '%s' "$input" | tr '\n' ' ')
 
