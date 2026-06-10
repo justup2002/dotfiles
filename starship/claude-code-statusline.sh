@@ -1,21 +1,35 @@
 #!/usr/bin/env sh
 set -eu
 
+# Use the starship.toml next to this script (it defines the claude-code
+# profile) unless the caller already set one. Without this, starship would
+# silently fall back to its built-in claude-code statusline whenever Claude
+# Code is launched from a context that didn't export STARSHIP_CONFIG.
+if [ -z "${STARSHIP_CONFIG:-}" ]; then
+    STARSHIP_CONFIG="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)/starship.toml"
+    export STARSHIP_CONFIG
+fi
+
 input=$(cat)
 json=$(printf '%s' "$input" | tr '\n' ' ')
 
+# First occurrence wins. (A greedy sed over the whole payload would return the
+# LAST match — e.g. the seven_day limit's used_percentage instead of the
+# context window's.)
 json_string() {
     key=$1
     printf '%s\n' "$json" |
-        sed -nE 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p' |
-        head -n 1
+        grep -oE '"'"$key"'"[[:space:]]*:[[:space:]]*"[^"]*"' |
+        head -n 1 |
+        sed -E 's/^"[^"]*"[[:space:]]*:[[:space:]]*"(.*)"$/\1/'
 }
 
 json_number() {
     key=$1
     printf '%s\n' "$json" |
-        sed -nE 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*([0-9]+([.][0-9]+)?).*/\1/p' |
-        head -n 1
+        grep -oE '"'"$key"'"[[:space:]]*:[[:space:]]*-?[0-9]+([.][0-9]+)?' |
+        head -n 1 |
+        sed -E 's/.*:[[:space:]]*//'
 }
 
 format_tokens() {
@@ -125,8 +139,9 @@ extract_number() {
     obj=$1
     key=$2
     printf '%s\n' "$obj" |
-        sed -nE 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*([0-9]+([.][0-9]+)?).*/\1/p' |
-        head -n 1
+        grep -oE '"'"$key"'"[[:space:]]*:[[:space:]]*-?[0-9]+([.][0-9]+)?' |
+        head -n 1 |
+        sed -E 's/.*:[[:space:]]*//'
 }
 
 five_hour_obj=$(printf '%s\n' "$json" | sed -nE 's/.*"five_hour"[[:space:]]*:[[:space:]]*\{([^}]*)\}.*/\1/p' | head -n 1)
@@ -137,16 +152,20 @@ five_hour_reset=$(extract_number "$five_hour_obj" resets_at)
 seven_day_pct=$(extract_number "$seven_day_obj" used_percentage)
 seven_day_reset=$(extract_number "$seven_day_obj" resets_at)
 
-export CLAUDE_CODE_MODEL_EFFORT="$model_effort"
-export CLAUDE_CODE_CONTEXT_USAGE="$(format_gauge "$used_percentage") $(format_tokens "$context_used")/$(format_tokens "$context_size") $(format_percentage "$used_percentage")"
-export CLAUDE_CODE_TOKEN_USAGE="$(format_tokens "$total_input") $(format_tokens "$total_output")"
+CLAUDE_CODE_MODEL_EFFORT="$model_effort"
+CLAUDE_CODE_CONTEXT_USAGE="$(format_gauge "$used_percentage") $(format_tokens "$context_used")/$(format_tokens "$context_size") $(format_percentage "$used_percentage")"
+CLAUDE_CODE_TOKEN_USAGE="$(format_tokens "$total_input") $(format_tokens "$total_output")"
+
+export CLAUDE_CODE_MODEL_EFFORT CLAUDE_CODE_CONTEXT_USAGE CLAUDE_CODE_TOKEN_USAGE
 
 if [ -n "$five_hour_pct" ] && [ -n "$five_hour_reset" ]; then
-    export CLAUDE_CODE_FIVE_HOUR_LIMIT="$(format_gauge "$five_hour_pct") $(format_percentage "$five_hour_pct") · $(format_remaining "$five_hour_reset")"
+    CLAUDE_CODE_FIVE_HOUR_LIMIT="$(format_gauge "$five_hour_pct") $(format_percentage "$five_hour_pct") · $(format_remaining "$five_hour_reset")"
+    export CLAUDE_CODE_FIVE_HOUR_LIMIT
 fi
 
 if [ -n "$seven_day_pct" ] && [ -n "$seven_day_reset" ]; then
-    export CLAUDE_CODE_SEVEN_DAY_LIMIT="$(format_gauge "$seven_day_pct") $(format_percentage "$seven_day_pct") · $(format_remaining "$seven_day_reset")"
+    CLAUDE_CODE_SEVEN_DAY_LIMIT="$(format_gauge "$seven_day_pct") $(format_percentage "$seven_day_pct") · $(format_remaining "$seven_day_reset")"
+    export CLAUDE_CODE_SEVEN_DAY_LIMIT
 fi
 
 starship_json=$(
