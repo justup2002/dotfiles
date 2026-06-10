@@ -113,9 +113,13 @@ _dotfiles_load_plugins() {
     local age=86401
     zstat -A mt +mtime "$dump" 2>/dev/null && (( age = EPOCHSECONDS - mt[1] ))
     if (( age < 86400 )); then
-        compinit -C -d "$dump"   # reuse the dump, skip the security scan
+        compinit -C -d "$dump"   # reuse the dump, skip the audit
     else
-        compinit -d "$dump"      # full rebuild at most once a day
+        # -u: don't audit fpath ownership — the audit prompts (and aborts
+        # without a tty, leaving compdef undefined) on runners/containers
+        # where site-functions isn't root-owned. Same trust model as the
+        # old zinit setup, which always ran compinit -C.
+        compinit -u -d "$dump"   # full rebuild at most once a day
     fi
 
     source "$P/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
