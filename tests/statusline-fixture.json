@@ -1,0 +1,30 @@
+{
+  "hook_event_name": "Status",
+  "session_id": "00000000-0000-0000-0000-000000000000",
+  "cwd": "/workspace",
+  "model": {
+    "id": "claude-fable-5",
+    "display_name": "Fable 5",
+    "effort": { "level": "high" }
+  },
+  "workspace": { "current_dir": "/workspace", "project_dir": "/workspace" },
+  "context_window": {
+    "context_window_size": 200000,
+    "used_percentage": 42.5,
+    "current_usage": {
+      "input_tokens": 50000,
+      "output_tokens": 2000,
+      "cache_creation_input_tokens": 10000,
+      "cache_read_input_tokens": 25000
+    }
+  },
+  "cost": {
+    "total_cost_usd": 1.23,
+    "total_input_tokens": 1200000,
+    "total_output_tokens": 30000
+  },
+  "limits": {
+    "five_hour": { "used_percentage": 31, "resets_at": 1781200000 },
+    "seven_day": { "used_percentage": 55, "resets_at": 1781600000 }
+  }
+}

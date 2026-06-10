@@ -2,7 +2,9 @@
 # PowerShell $PROFILE — managed by dotfiles repo
 # =============================================================================
 
-if (-not $env:DOTFILES) { $env:DOTFILES = Join-Path $HOME ".dotfiles" }
+# Self-locate: this file lives at <repo>\powershell\profile.ps1, so the repo
+# root is its grandparent. No persistent env var or hardcoded path needed.
+$env:DOTFILES = Split-Path -Parent $PSScriptRoot
 
 # Optional startup profiler: $env:PSPROFILE='1'; pwsh -NoLogo
 if ($env:PSPROFILE) { $script:profileStart = Get-Date }

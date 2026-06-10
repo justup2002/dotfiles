@@ -6,13 +6,16 @@ profile.local.ps1
 # Dev container config — not part of dotfiles
 .devcontainer/
 
+# Byte-compiled zsh (generated in-place next to sources)
+*.zwc
+
 # OS junk
 .DS_Store
 Thumbs.db
 desktop.ini
 
 # Backups left by bootstrap
-.zshrc.backup.*
+*.backup.*
 
 # Editor
 .vscode/

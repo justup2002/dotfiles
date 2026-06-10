@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck bootstrap/linux.sh tools/update-plugins.sh
+      - run: shellcheck --shell=sh starship/claude-code-statusline.sh
+
+  linux-bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run bootstrap
+        run: ./bootstrap/linux.sh
+
+      - name: Symlinks point into the repo
+        run: |
+          set -x
+          [ "$(readlink -f ~/.zshrc)"  = "$GITHUB_WORKSPACE/zsh/.zshrc" ]
+          [ "$(readlink -f ~/.zshenv)" = "$GITHUB_WORKSPACE/zsh/.zshenv" ]
+
+      - name: Interactive zsh starts clean (plugins loaded synchronously)
+        run: |
+          out=$(DOTFILES_DEFER=0 DOTFILES_SYNC=0 zsh -ic 'echo BOOT_OK' 2>&1)
+          printf '%s\n' "$out"
+          printf '%s' "$out" | grep -q BOOT_OK
+          ! printf '%s' "$out" | grep -iE 'error|not found|no such file'
+
+      - name: Plugins actually loaded
+        run: |
+          DOTFILES_DEFER=0 DOTFILES_SYNC=0 zsh -ic '
+            (( $+functions[_zsh_autosuggest_start] )) || { echo missing autosuggestions; exit 1 }
+            (( $+functions[_zsh_highlight] )) || { echo missing fast-syntax-highlighting; exit 1 }
+            (( $+functions[git_current_branch] )) || { echo missing omz git lib; exit 1 }
+            alias gst >/dev/null || { echo missing omz git aliases; exit 1 }
+            echo PLUGINS_OK'
+
+      - name: Claude statusline renders the fixture
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          out=$(./starship/claude-code-statusline.sh < tests/statusline-fixture.json)
+          printf '%s\n' "$out"
+          printf '%s' "$out" | grep -q 'Fable 5 (high)'
+
+      - name: Bootstrap is idempotent
+        run: ./bootstrap/linux.sh
+
+  pwsh-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse PowerShell files
+        shell: pwsh
+        run: |
+          $failed = $false
+          foreach ($f in 'bootstrap/windows.ps1', 'powershell/profile.ps1') {
+            $tokens = $null; $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Join-Path $pwd $f), [ref]$tokens, [ref]$errors)
+            if ($errors) {
+              $errors | ForEach-Object { Write-Host "${f}: $_" -ForegroundColor Red }
+              $failed = $true
+            } else {
+              Write-Host "${f}: parses clean"
+            }
+          }
+          if ($failed) { exit 1 }
