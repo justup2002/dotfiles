@@ -110,8 +110,8 @@ Profile a launch: `ZPROF=1 zsh -i -c exit` /
 ## Claude Code statusline
 
 `starship/claude-code-statusline.sh` turns Claude Code's status JSON into a
-starship-rendered powerline (model + effort, context gauge, token counts,
-5h/7d limits). Wire it up in `~/.claude/settings.json`:
+starship-rendered powerline (model + effort, context gauge, session cost and
+lines added/removed, 5h/7d limits). Wire it up in `~/.claude/settings.json`:
 
 ```json
 { "statusLine": { "command": "~/.dotfiles/starship/claude-code-statusline.sh" } }

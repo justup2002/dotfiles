@@ -43,12 +43,20 @@ jobs:
             alias gst >/dev/null || { echo missing omz git aliases; exit 1 }
             echo PLUGINS_OK'
 
-      - name: Claude statusline renders the fixture
+      - name: Claude statusline renders the fixtures
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          out=$(./starship/claude-code-statusline.sh < tests/statusline-fixture.json)
+          out=$(./starship/claude-code-statusline.sh < tests/statusline-fixture.json 2>&1)
           printf '%s\n' "$out"
           printf '%s' "$out" | grep -q 'Fable 5 (high)'
+          printf '%s' "$out" | grep -q '85k/200k 42.5%'
+          printf '%s' "$out" | grep -q '\$1.23 · +156/-23'
+          # Fresh session: null current_usage/used_percentage must render as an
+          # empty context window, not leak rate_limits.five_hour.used_percentage.
+          out=$(./starship/claude-code-statusline.sh < tests/statusline-fixture-fresh.json 2>&1)
+          printf '%s\n' "$out"
+          printf '%s' "$out" | grep -q '0/1M 0%'
+          ! printf '%s' "$out" | grep -q 'ERROR'
 
       - name: Bootstrap is idempotent
         run: ./bootstrap/linux.sh
