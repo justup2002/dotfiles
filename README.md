@@ -111,7 +111,8 @@ Profile a launch: `ZPROF=1 zsh -i -c exit` /
 
 `starship/claude-code-statusline.sh` turns Claude Code's status JSON into a
 starship-rendered powerline (model + effort, context gauge, session cost and
-lines added/removed, 5h/7d limits). Wire it up in `~/.claude/settings.json`:
+lines added/removed, 5h/7d limits, and — when Fable is the active model — the
+Fable-specific weekly limit). Wire it up in `~/.claude/settings.json`:
 
 ```json
 { "statusLine": { "command": "~/.dotfiles/starship/claude-code-statusline.sh" } }
@@ -119,6 +120,14 @@ lines added/removed, 5h/7d limits). Wire it up in `~/.claude/settings.json`:
 
 The statusline's starship profile lives in `starship/starship.toml`
 (`[profiles] claude-code`).
+
+The status JSON's `rate_limits` only carries the 5h/7d buckets, so the Fable
+weekly bar is fetched from `GET api.anthropic.com/api/oauth/usage` (OAuth
+token from `~/.claude/.credentials.json`) and cached for a minute at
+`~/.cache/claude-code-statusline/oauth-usage.json`. Renders never wait on the
+network once a cache exists; if the fetch fails the bar is simply hidden. Set
+`CLAUDE_CODE_USAGE_CACHE` to a fixture (e.g. `tests/usage-fixture.json`) to
+render it offline.
 
 ## 1Password SSH agent (WSL2 → Windows)
 

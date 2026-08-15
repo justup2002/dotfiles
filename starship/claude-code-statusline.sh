@@ -206,6 +206,100 @@ if [ -n "$seven_day_pct" ] && [ -n "$seven_day_reset" ]; then
     export CLAUDE_CODE_SEVEN_DAY_LIMIT
 fi
 
+# Fable 5 usage is metered against its own weekly bucket, but the payload's
+# rate_limits only ever carries five_hour/seven_day (checked against the
+# 2.1.233 payload builder). The bucket is only served by GET /api/oauth/usage,
+# as a limits[] entry of the form
+#   {"kind":"weekly_scoped",...,"percent":34,"resets_at":"2026-08-19T22:00:00+00:00",
+#    "scope":{"model":{"display_name":"Fable"},...},...}
+# so fetch it ourselves — cached on disk, and only when Fable is the active
+# model (the bar is hidden otherwise, so non-Fable renders never pay for it).
+refresh_usage_cache() {
+    creds="$HOME/.claude/.credentials.json"
+    [ -r "$creds" ] || return 1
+    token=$(
+        grep -oE '"accessToken"[[:space:]]*:[[:space:]]*"[^"]*"' "$creds" |
+            head -n 1 |
+            sed -E 's/^"[^"]*"[[:space:]]*:[[:space:]]*"(.*)"$/\1/'
+    )
+    [ -n "$token" ] || return 1
+    (
+        umask 077
+        mkdir -p "$(dirname "$usage_cache")" || exit 1
+        # Claude Code can kill a render mid-fetch, orphaning its tmp file.
+        find "$(dirname "$usage_cache")" -name "$(basename "$usage_cache").tmp.*" \
+            -mmin +10 -delete 2>/dev/null || true
+        tmp="$usage_cache.tmp.$$"
+        # -K - feeds the Authorization header via stdin so the token never
+        # appears in the process list. On failure the old cache is kept.
+        if printf 'header = "Authorization: Bearer %s"\n' "$token" |
+            curl -sf -m 4 -K - \
+                -H 'anthropic-beta: oauth-2025-04-20' \
+                https://api.anthropic.com/api/oauth/usage >"$tmp" 2>/dev/null; then
+            mv -f "$tmp" "$usage_cache"
+        else
+            rm -f "$tmp"
+            exit 1
+        fi
+    )
+}
+
+model_id=$(json_string id) # first "id" in the payload is model.id
+fable_pct=
+fable_reset=
+case "$model_id $model" in
+*[Ff]able*)
+    usage_cache=${CLAUDE_CODE_USAGE_CACHE:-}
+    if [ -n "$usage_cache" ]; then
+        : # explicit override (tests/fixtures): use the file as-is, never refresh
+    else
+        usage_cache="${XDG_CACHE_HOME:-$HOME/.cache}/claude-code-statusline/oauth-usage.json"
+        # A minute-old reading is fine for a usage gauge. Refresh in the
+        # background so renders never wait on the network once a cache
+        # exists; only the very first render blocks (at most 4s).
+        if [ ! -f "$usage_cache" ]; then
+            refresh_usage_cache || true
+        elif ! find "$usage_cache" -mmin -1 2>/dev/null | grep -q . &&
+            ! find "$(dirname "$usage_cache")" \
+                -name "$(basename "$usage_cache").tmp.*" -mmin -1 2>/dev/null |
+                grep -q .; then
+            # Stale cache and no recent .tmp (i.e. no fetch already in
+            # flight from another render): refresh in the background.
+            refresh_usage_cache >/dev/null 2>&1 &
+        fi
+    fi
+    if [ -r "$usage_cache" ]; then
+        # Split limits[] entries onto their own lines so the percent below
+        # can't be read from a neighbouring (e.g. Opus/Sonnet-scoped) entry.
+        fable_entry=$(
+            tr -d '\n' <"$usage_cache" |
+                sed 's/{"kind"/\n{"kind"/g' |
+                grep '"weekly_scoped"' |
+                grep -i '"display_name"[[:space:]]*:[[:space:]]*"fable' |
+                head -n 1
+        )
+        fable_pct=$(extract_number "$fable_entry" percent)
+        fable_reset_iso=$(
+            printf '%s\n' "$fable_entry" |
+                grep -oE '"resets_at"[[:space:]]*:[[:space:]]*"[^"]*"' |
+                head -n 1 |
+                sed -E 's/.*:[[:space:]]*"(.*)"$/\1/'
+        )
+        if [ -n "$fable_reset_iso" ]; then
+            fable_reset=$(date -d "$fable_reset_iso" +%s 2>/dev/null || true)
+        fi
+    fi
+    ;;
+esac
+
+if [ -n "$fable_pct" ]; then
+    CLAUDE_CODE_FABLE_LIMIT="$(format_gauge "$fable_pct") $(format_percentage "$fable_pct")"
+    if [ -n "$fable_reset" ]; then
+        CLAUDE_CODE_FABLE_LIMIT="$CLAUDE_CODE_FABLE_LIMIT · $(format_remaining "$fable_reset")"
+    fi
+    export CLAUDE_CODE_FABLE_LIMIT
+fi
+
 # Starship deserializes the payload strictly (null percentages fail with
 # "invalid type: null, expected f32"), so zero out every nullable
 # context_window field, not just current_usage.
