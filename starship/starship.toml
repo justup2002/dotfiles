@@ -143,7 +143,7 @@ command = 'printf "%s" "$CLAUDE_CODE_SEVEN_DAY_LIMIT"'
 when = 'test -n "$CLAUDE_CODE_SEVEN_DAY_LIMIT"'
 format = '[](fg:orange)[󰸘 ](fg:primary bg:orange)[](fg:orange bg:box)[ $output](fg:foreground bg:box)[](fg:box)'
 
-# Fable weekly bucket — only set when Fable is the active model. Leading
+# Fable weekly bucket — only set when Fable or Mythos is the active model. Leading
 # space (instead of a trailing one on claude_seven_day_limit) so the line
 # ends cleanly when this segment is hidden.
 [custom.claude_fable_limit]

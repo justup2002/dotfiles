@@ -212,8 +212,10 @@ fi
 # as a limits[] entry of the form
 #   {"kind":"weekly_scoped",...,"percent":34,"resets_at":"2026-08-19T22:00:00+00:00",
 #    "scope":{"model":{"display_name":"Fable"},...},...}
-# so fetch it ourselves — cached on disk, and only when Fable is the active
-# model (the bar is hidden otherwise, so non-Fable renders never pay for it).
+# so fetch it ourselves — cached on disk, and only when the active model draws
+# from that bucket (the bar is hidden otherwise, so other renders never pay
+# for it). Mythos shares Fable's underlying model and is metered against the
+# same Fable bucket, so it counts too.
 refresh_usage_cache() {
     creds="$HOME/.claude/.credentials.json"
     [ -r "$creds" ] || return 1
@@ -248,7 +250,7 @@ model_id=$(json_string id) # first "id" in the payload is model.id
 fable_pct=
 fable_reset=
 case "$model_id $model" in
-*[Ff]able*)
+*[Ff]able* | *[Mm]ythos*)
     usage_cache=${CLAUDE_CODE_USAGE_CACHE:-}
     if [ -n "$usage_cache" ]; then
         : # explicit override (tests/fixtures): use the file as-is, never refresh

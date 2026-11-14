@@ -111,8 +111,8 @@ Profile a launch: `ZPROF=1 zsh -i -c exit` /
 
 `starship/claude-code-statusline.sh` turns Claude Code's status JSON into a
 starship-rendered powerline (model + effort, context gauge, session cost and
-lines added/removed, 5h/7d limits, and — when Fable is the active model — the
-Fable-specific weekly limit). Wire it up in `~/.claude/settings.json`:
+lines added/removed, 5h/7d limits, and — when Fable or Mythos (which draws
+down the same bucket) is the active model — the Fable-specific weekly limit). Wire it up in `~/.claude/settings.json`:
 
 ```json
 { "statusLine": { "command": "~/.dotfiles/starship/claude-code-statusline.sh" } }
